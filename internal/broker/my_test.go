@@ -47,5 +47,5 @@ func randomString(n int) string {
 func createMessageWithExpire(subject string, duration time.Duration) broker.CreateMessageDTO {
 	body := randomString(16)
 
-	return broker.NewCreateMessageDTO(subject, body, int32(duration))
+	return broker.CreateMessageDTO{Subject: subject, Body: body, ExpirationTime: broker.CalcExpirationTime(duration)}
 }
