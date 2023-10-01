@@ -12,6 +12,6 @@ import (
 // 	  for every base functionality ( publish, subscribe etc. )
 
 func main() {
-	fmt.Println("Hello!")
+	fmt.Println("Server started...")
 	api.StartGrpcServer()
 }
