@@ -6,5 +6,6 @@ type Message struct {
 	Id             int
 	Subject        string
 	Body           string
-	expirationTime time.Time
+	ExpirationTime time.Time
+	CreatedAt      time.Time
 }
