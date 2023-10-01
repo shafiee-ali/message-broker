@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"sync"
 	"therealbroker/internal/types"
 	pkgBroker "therealbroker/pkg/broker"
 	"therealbroker/pkg/models"
@@ -8,11 +9,15 @@ import (
 )
 
 type InMemoryDB struct {
-	items []models.Message
+	dbLock sync.Mutex
+	items  []models.Message
 }
 
 func NewInMemoryDB() *InMemoryDB {
-	return &InMemoryDB{make([]models.Message, 0, 0)}
+	return &InMemoryDB{
+		sync.Mutex{},
+		make([]models.Message, 0, 0),
+	}
 }
 
 type IMessageRepository interface {
@@ -38,6 +43,8 @@ func (db *InMemoryDB) FetchUnexpiredBySubjectAndId(subject string, id int) (type
 }
 
 func (db *InMemoryDB) Add(message pkgBroker.CreateMessageDTO) types.CreatedMessage {
+	db.dbLock.Lock()
+	defer db.dbLock.Unlock()
 	id := db.GenerateNewId()
 	newMessage := models.Message{
 		Id:             id,
