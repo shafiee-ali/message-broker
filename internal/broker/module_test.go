@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"sync"
 	"testing"
+	"therealbroker/internal/types"
 	"therealbroker/pkg/broker"
 	"therealbroker/pkg/repository"
 	"time"
@@ -118,7 +119,9 @@ func TestNonExpiredMessageShouldBeFetchable(t *testing.T) {
 	id, _ := service.Publish(mainCtx, msg)
 	fMsg, _ := service.Fetch(mainCtx, "ali", id)
 
-	assert.Equal(t, msg, fMsg)
+	assert.Equal(t, msg.Subject, fMsg.Subject)
+	assert.Equal(t, msg.Body, fMsg.Body)
+	assert.Equal(t, msg.ExpirationTime, fMsg.ExpirationTime)
 }
 
 func TestExpiredMessageShouldNotBeFetchable(t *testing.T) {
@@ -130,7 +133,7 @@ func TestExpiredMessageShouldNotBeFetchable(t *testing.T) {
 	<-ticker.C
 	fMsg, err := service.Fetch(mainCtx, "ali", id)
 	assert.Equal(t, broker.ErrExpiredID, err)
-	assert.Equal(t, broker.CreateMessageDTO{}, fMsg)
+	assert.Equal(t, types.CreatedMessage{}, fMsg)
 }
 
 func TestNewSubscriptionShouldNotGetPreviousMessages(t *testing.T) {
