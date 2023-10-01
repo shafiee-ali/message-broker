@@ -46,11 +46,7 @@ func (m *Module) Fetch(ctx context.Context, subject string, id int) (types.Creat
 	if err != nil {
 		return types.EmptyCreatedMessage(), broker.ErrUnavailable
 	}
-	msg, err := m.repository.FetchUnexpiredBySubjectAndId(subject, id)
-	if err != nil {
-		return types.EmptyCreatedMessage(), err
-	}
-	return msg, nil
+	return m.repository.FetchUnexpiredBySubjectAndId(subject, id)
 }
 
 func (m *Module) checkServerDown() error {
