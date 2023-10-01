@@ -31,8 +31,12 @@ func (s *server) Subscribe(request *pb.SubscribeRequest, srv pb.Broker_Subscribe
 }
 
 func (s *server) Fetch(ctx context.Context, request *pb.FetchRequest) (*pb.MessageResponse, error) {
+	msg, err := s.broker.Fetch(ctx, request.Subject, int(request.Id))
+	if err != nil {
+		return nil, err
+	}
 	return &pb.MessageResponse{
-		Body: []byte("a"),
+		Body: []byte(msg.Body),
 	}, nil
 }
 

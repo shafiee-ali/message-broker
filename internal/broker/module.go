@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"sync"
+	"therealbroker/internal/types"
 	"therealbroker/pkg/broker"
 	"therealbroker/pkg/repository"
 )
@@ -40,8 +41,16 @@ func (m *Module) Subscribe(ctx context.Context, subject string) (<-chan broker.C
 	panic("implement me")
 }
 
-func (m *Module) Fetch(ctx context.Context, subject string, id int) (broker.CreateMessageDTO, error) {
-	panic("implement me")
+func (m *Module) Fetch(ctx context.Context, subject string, id int) (types.CreatedMessage, error) {
+	err := m.checkServerDown()
+	if err != nil {
+		return types.EmptyCreatedMessage(), broker.ErrUnavailable
+	}
+	msg, err := m.repository.FetchUnexpiredBySubjectAndId(subject, id)
+	if err != nil {
+		return types.EmptyCreatedMessage(), err
+	}
+	return msg, nil
 }
 
 func (m *Module) checkServerDown() error {
