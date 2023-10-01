@@ -6,10 +6,12 @@ import (
 	"log"
 	"net"
 	pb "therealbroker/api/proto"
+	"therealbroker/pkg/broker"
 )
 
 type server struct {
 	pb.UnimplementedBrokerServer
+	broker broker.Broker
 }
 
 func (s *server) mustEmbedUnimplementedBrokerServer() {
@@ -18,9 +20,15 @@ func (s *server) mustEmbedUnimplementedBrokerServer() {
 }
 
 func (s *server) Publish(ctx context.Context, request *pb.PublishRequest) (*pb.PublishResponse, error) {
+	newMsg := broker.NewCreateMessageDTO(request.Subject, string(request.Body), request.ExpirationSeconds)
+	id, err := s.broker.Publish(ctx, newMsg)
+	if err != nil {
+		return nil, err
+	}
 	return &pb.PublishResponse{
-		Id: 1,
+		Id: int32(id),
 	}, nil
+
 }
 
 func (s *server) Subscribe(request *pb.SubscribeRequest, srv pb.Broker_SubscribeServer) error {

@@ -3,28 +3,30 @@ package broker
 import (
 	"context"
 	"therealbroker/pkg/broker"
+	"therealbroker/pkg/repository"
 )
 
 type Module struct {
-	// TODO: Add required fields
+	repository repository.IMessageRepository
 }
 
-func NewModule() broker.Broker {
-	return &Module{}
+func NewModule(repo repository.IMessageRepository) broker.Broker {
+	return &Module{repository: repo}
 }
 
 func (m *Module) Close() error {
 	panic("implement me")
 }
 
-func (m *Module) Publish(ctx context.Context, subject string, msg broker.Message) (int, error) {
+func (m *Module) Publish(ctx context.Context, msg broker.CreateMessageDTO) (int, error) {
+	createdMessage := m.repository.Add(msg)
+	return createdMessage.Id, nil
+}
+
+func (m *Module) Subscribe(ctx context.Context, subject string) (<-chan broker.CreateMessageDTO, error) {
 	panic("implement me")
 }
 
-func (m *Module) Subscribe(ctx context.Context, subject string) (<-chan broker.Message, error) {
-	panic("implement me")
-}
-
-func (m *Module) Fetch(ctx context.Context, subject string, id int) (broker.Message, error) {
+func (m *Module) Fetch(ctx context.Context, subject string, id int) (broker.CreateMessageDTO, error) {
 	panic("implement me")
 }
