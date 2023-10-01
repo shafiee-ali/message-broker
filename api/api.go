@@ -14,16 +14,11 @@ type server struct {
 	broker broker.Broker
 }
 
-func (s *server) mustEmbedUnimplementedBrokerServer() {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (s *server) Publish(ctx context.Context, request *pb.PublishRequest) (*pb.PublishResponse, error) {
 	newMsg := broker.NewCreateMessageDTO(request.Subject, string(request.Body), request.ExpirationSeconds)
 	id, err := s.broker.Publish(ctx, newMsg)
 	if err != nil {
-		return nil, err
+		log.Printf("Publish failed %v", err)
 	}
 	return &pb.PublishResponse{
 		Id: int32(id),
