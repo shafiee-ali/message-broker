@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"io"
+	"therealbroker/internal/types"
 	"time"
 )
 
@@ -20,7 +21,7 @@ type Broker interface {
 	io.Closer
 	Publish(ctx context.Context, msg CreateMessageDTO) (int, error)
 	Subscribe(ctx context.Context, subject string) (<-chan CreateMessageDTO, error)
-	Fetch(ctx context.Context, subject string, id int) (CreateMessageDTO, error)
+	Fetch(ctx context.Context, subject string, id int) (types.CreatedMessage, error)
 }
 
 func CalcExpirationTime(d time.Duration) time.Time {
