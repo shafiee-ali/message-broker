@@ -17,10 +17,24 @@ func NewInMemoryDB() *InMemoryDB {
 
 type IMessageRepository interface {
 	Add(message pkgBroker.CreateMessageDTO) types.CreatedMessage
+	FetchUnexpiredBySubjectAndId(subject string, id int) (types.CreatedMessage, error)
 }
 
 func (db *InMemoryDB) GenerateNewId() int {
 	return len(db.items) + 1
+}
+
+func (db *InMemoryDB) FetchUnexpiredBySubjectAndId(subject string, id int) (types.CreatedMessage, error) {
+	for _, msg := range db.items {
+		if msg.Id == id && msg.Subject == subject {
+			if msg.IsExpired() {
+				return types.EmptyCreatedMessage(), pkgBroker.ErrExpiredID
+			} else {
+				return types.NewCreatedMessage(msg), nil
+			}
+		}
+	}
+	return types.EmptyCreatedMessage(), pkgBroker.ErrInvalidID
 }
 
 func (db *InMemoryDB) Add(message pkgBroker.CreateMessageDTO) types.CreatedMessage {

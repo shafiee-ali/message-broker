@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Message struct {
 	Id             int
@@ -8,4 +10,8 @@ type Message struct {
 	Body           string
 	ExpirationTime time.Time
 	CreatedAt      time.Time
+}
+
+func (msg *Message) IsExpired() bool {
+	return msg.ExpirationTime.Before(time.Now())
 }
