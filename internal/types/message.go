@@ -20,3 +20,7 @@ func NewCreatedMessage(msgModel models.Message) CreatedMessage {
 		ExpirationTime: msgModel.ExpirationTime,
 	}
 }
+
+func EmptyCreatedMessage() CreatedMessage {
+	return CreatedMessage{}
+}
