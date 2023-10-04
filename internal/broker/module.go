@@ -9,21 +9,25 @@ import (
 )
 
 type Module struct {
-	repository repository.IMessageRepository
-	lock       sync.Mutex
-	isClosed   bool
+	subscribers       map[string][]*types.Subscriber
+	repository        repository.IMessageRepository
+	statusLock        sync.Mutex
+	addSubscriberLock sync.Mutex
+	publishLock       sync.Mutex
+	isClosed          bool
 }
 
 func NewModule(repo repository.IMessageRepository) broker.Broker {
-	return &Module{repository: repo}
+	return &Module{
+		repository:  repo,
+		subscribers: make(map[string][]*types.Subscriber),
+		isClosed:    false,
+	}
 }
 
 func (m *Module) Close() error {
-	m.lock.Lock()
-	defer m.lock.Unlock()
-	if m.isClosed {
-		return broker.ErrUnavailable
-	}
+	m.statusLock.Lock()
+	defer m.statusLock.Unlock()
 	m.isClosed = true
 	return nil
 }
@@ -34,11 +38,34 @@ func (m *Module) Publish(ctx context.Context, msg broker.CreateMessageDTO) (int,
 		return -1, err
 	}
 	createdMessage := m.repository.Add(msg)
+	m.SendMessageToSubscribers(createdMessage)
 	return createdMessage.Id, nil
 }
 
-func (m *Module) Subscribe(ctx context.Context, subject string) (<-chan broker.CreateMessageDTO, error) {
-	panic("implement me")
+func (m *Module) SendMessageToSubscribers(msg types.CreatedMessage) {
+	msgWithoutId := types.NewCreatedMessageWithoutId(msg)
+	wg := sync.WaitGroup{}
+	for _, subsriber := range m.subscribers[msg.Subject] {
+		wg.Add(1)
+		go func(sub *types.Subscriber) {
+			defer wg.Done()
+			sub.Stream <- *msgWithoutId
+		}(subsriber)
+	}
+	wg.Wait()
+}
+
+func (m *Module) Subscribe(ctx context.Context, subject string) (<-chan types.CreatedMessageWithoutId, error) {
+	err := m.checkServerDown()
+	if err != nil {
+		return nil, broker.ErrUnavailable
+	}
+
+	m.addSubscriberLock.Lock()
+	newSub := types.NewSubscriber()
+	m.subscribers[subject] = append(m.subscribers[subject], newSub)
+	m.addSubscriberLock.Unlock()
+	return newSub.Stream, nil
 }
 
 func (m *Module) Fetch(ctx context.Context, subject string, id int) (types.CreatedMessage, error) {
@@ -50,8 +77,8 @@ func (m *Module) Fetch(ctx context.Context, subject string, id int) (types.Creat
 }
 
 func (m *Module) checkServerDown() error {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+	m.statusLock.Lock()
+	defer m.statusLock.Unlock()
 	if m.isClosed {
 		return broker.ErrUnavailable
 	}

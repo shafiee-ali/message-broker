@@ -5,6 +5,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"sync"
 	pb "therealbroker/api/proto"
 	"therealbroker/pkg/broker"
 )
@@ -27,7 +28,29 @@ func (s *server) Publish(ctx context.Context, request *pb.PublishRequest) (*pb.P
 }
 
 func (s *server) Subscribe(request *pb.SubscribeRequest, srv pb.Broker_SubscribeServer) error {
-	return nil
+	ch, err := s.broker.Subscribe(srv.Context(), request.Subject)
+	if err != nil {
+
+	}
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		for {
+			select {
+			case msg := <-ch:
+				srv.Send(
+					&pb.MessageResponse{
+						Body: []byte(msg.Body),
+					},
+				)
+			case <-srv.Context().Done():
+				wg.Done()
+			}
+
+		}
+	}()
+	wg.Wait()
+	return err
 }
 
 func (s *server) Fetch(ctx context.Context, request *pb.FetchRequest) (*pb.MessageResponse, error) {
