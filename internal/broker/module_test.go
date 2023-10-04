@@ -25,7 +25,13 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+func Setup() {
+	inMemoryRepo := repository.NewInMemoryDB()
+	service = NewModule(inMemoryRepo)
+}
+
 func TestPublishShouldFailOnClosed(t *testing.T) {
+	Setup()
 	msg := createMessage("ali")
 
 	err := service.Close()
@@ -36,6 +42,7 @@ func TestPublishShouldFailOnClosed(t *testing.T) {
 }
 
 func TestSubscribeShouldFailOnClosed(t *testing.T) {
+	Setup()
 	err := service.Close()
 	assert.Nil(t, err)
 
@@ -44,6 +51,7 @@ func TestSubscribeShouldFailOnClosed(t *testing.T) {
 }
 
 func TestFetchShouldFailOnClosed(t *testing.T) {
+	Setup()
 	err := service.Close()
 	assert.Nil(t, err)
 
@@ -52,6 +60,7 @@ func TestFetchShouldFailOnClosed(t *testing.T) {
 }
 
 func TestPublishShouldNotFail(t *testing.T) {
+	Setup()
 	msg := createMessage("ali")
 
 	_, err := service.Publish(mainCtx, msg)
@@ -60,6 +69,7 @@ func TestPublishShouldNotFail(t *testing.T) {
 }
 
 func TestSubscribeShouldNotFail(t *testing.T) {
+	Setup()
 	sub, err := service.Subscribe(mainCtx, "ali")
 
 	assert.Equal(t, nil, err)
@@ -67,6 +77,7 @@ func TestSubscribeShouldNotFail(t *testing.T) {
 }
 
 func TestPublishShouldSendMessageToSubscribedChan(t *testing.T) {
+	Setup()
 	msg := createMessage("ali")
 
 	sub, _ := service.Subscribe(mainCtx, "ali")
@@ -79,6 +90,7 @@ func TestPublishShouldSendMessageToSubscribedChan(t *testing.T) {
 }
 
 func TestPublishShouldSendMessageToSubscribedChans(t *testing.T) {
+	Setup()
 	msg := createMessage("ali")
 
 	sub1, _ := service.Subscribe(mainCtx, "ali")
@@ -104,6 +116,7 @@ func TestPublishShouldSendMessageToSubscribedChans(t *testing.T) {
 }
 
 func TestPublishShouldPreserveOrder(t *testing.T) {
+	Setup()
 	n := 50
 	messages := make([]broker.CreateMessageDTO, n)
 	sub, _ := service.Subscribe(mainCtx, "ali")
@@ -121,6 +134,7 @@ func TestPublishShouldPreserveOrder(t *testing.T) {
 }
 
 func TestPublishShouldNotSendToOtherSubscriptions(t *testing.T) {
+	Setup()
 	msg := createMessage("ali")
 	ali, _ := service.Subscribe(mainCtx, "ali")
 	maryam, _ := service.Subscribe(mainCtx, "maryam")
@@ -137,6 +151,7 @@ func TestPublishShouldNotSendToOtherSubscriptions(t *testing.T) {
 }
 
 func TestNonExpiredMessageShouldBeFetchable(t *testing.T) {
+	Setup()
 	msg := createMessageWithExpire("ali", time.Second*10)
 	id, _ := service.Publish(mainCtx, msg)
 	fMsg, _ := service.Fetch(mainCtx, "ali", id)
@@ -147,6 +162,7 @@ func TestNonExpiredMessageShouldBeFetchable(t *testing.T) {
 }
 
 func TestExpiredMessageShouldNotBeFetchable(t *testing.T) {
+	Setup()
 	msg := createMessageWithExpire("ali", time.Millisecond*500)
 	id, _ := service.Publish(mainCtx, msg)
 	ticker := time.NewTicker(time.Second)
@@ -159,6 +175,7 @@ func TestExpiredMessageShouldNotBeFetchable(t *testing.T) {
 }
 
 func TestNewSubscriptionShouldNotGetPreviousMessages(t *testing.T) {
+	Setup()
 	msg := createMessage("ali")
 	_, _ = service.Publish(mainCtx, msg)
 	sub, _ := service.Subscribe(mainCtx, "ali")
@@ -171,6 +188,7 @@ func TestNewSubscriptionShouldNotGetPreviousMessages(t *testing.T) {
 }
 
 func TestConcurrentSubscribesOnOneSubjectShouldNotFail(t *testing.T) {
+	Setup()
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 	var wg sync.WaitGroup
@@ -194,6 +212,7 @@ func TestConcurrentSubscribesOnOneSubjectShouldNotFail(t *testing.T) {
 }
 
 func TestConcurrentSubscribesShouldNotFail(t *testing.T) {
+	Setup()
 	ticker := time.NewTicker(2000 * time.Millisecond)
 	defer ticker.Stop()
 	var wg sync.WaitGroup
@@ -217,6 +236,7 @@ func TestConcurrentSubscribesShouldNotFail(t *testing.T) {
 }
 
 func TestConcurrentPublishOnOneSubjectShouldNotFail(t *testing.T) {
+	Setup()
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 	var wg sync.WaitGroup
@@ -242,6 +262,7 @@ func TestConcurrentPublishOnOneSubjectShouldNotFail(t *testing.T) {
 }
 
 func TestConcurrentPublishShouldNotFail(t *testing.T) {
+	Setup()
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 	var wg sync.WaitGroup
@@ -267,6 +288,7 @@ func TestConcurrentPublishShouldNotFail(t *testing.T) {
 }
 
 func TestDataRace(t *testing.T) {
+	Setup()
 	duration := 500 * time.Millisecond
 	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
