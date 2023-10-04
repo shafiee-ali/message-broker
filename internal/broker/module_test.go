@@ -1,6 +1,7 @@
 package broker
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"sync"
@@ -9,6 +10,12 @@ import (
 	"therealbroker/pkg/broker"
 	"therealbroker/pkg/repository"
 	"time"
+)
+
+var (
+	service broker.Broker
+	mainCtx = context.Background()
+	letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
 
 func TestMain(m *testing.M) {
@@ -66,7 +73,9 @@ func TestPublishShouldSendMessageToSubscribedChan(t *testing.T) {
 	_, _ = service.Publish(mainCtx, msg)
 	in := <-sub
 
-	assert.Equal(t, msg, in)
+	assert.Equal(t, msg.Body, in.Body)
+	assert.Equal(t, msg.Subject, in.Subject)
+	assert.Equal(t, msg.ExpirationTime, in.ExpirationTime)
 }
 
 func TestPublishShouldSendMessageToSubscribedChans(t *testing.T) {
@@ -80,9 +89,18 @@ func TestPublishShouldSendMessageToSubscribedChans(t *testing.T) {
 	in2 := <-sub2
 	in3 := <-sub3
 
-	assert.Equal(t, msg, in1)
-	assert.Equal(t, msg, in2)
-	assert.Equal(t, msg, in3)
+	assert.Equal(t, msg.Subject, in1.Subject)
+	assert.Equal(t, msg.Body, in1.Body)
+	assert.Equal(t, msg.ExpirationTime, in1.ExpirationTime)
+
+	assert.Equal(t, msg.Subject, in2.Subject)
+	assert.Equal(t, msg.Body, in2.Body)
+	assert.Equal(t, msg.ExpirationTime, in2.ExpirationTime)
+
+	assert.Equal(t, msg.Subject, in3.Subject)
+	assert.Equal(t, msg.Body, in3.Body)
+	assert.Equal(t, msg.ExpirationTime, in3.ExpirationTime)
+
 }
 
 func TestPublishShouldPreserveOrder(t *testing.T) {
@@ -96,7 +114,9 @@ func TestPublishShouldPreserveOrder(t *testing.T) {
 
 	for i := 0; i < n; i++ {
 		msg := <-sub
-		assert.Equal(t, messages[i], msg)
+		assert.Equal(t, messages[i].Subject, msg.Subject)
+		assert.Equal(t, messages[i].Body, msg.Body)
+		assert.Equal(t, messages[i].ExpirationTime, msg.ExpirationTime)
 	}
 }
 
@@ -108,7 +128,9 @@ func TestPublishShouldNotSendToOtherSubscriptions(t *testing.T) {
 	_, _ = service.Publish(mainCtx, msg)
 	select {
 	case m := <-ali:
-		assert.Equal(t, msg, m)
+		assert.Equal(t, msg.Subject, m.Subject)
+		assert.Equal(t, msg.Body, m.Body)
+		assert.Equal(t, msg.ExpirationTime, m.ExpirationTime)
 	case <-maryam:
 		assert.Fail(t, "Wrong message received")
 	}
@@ -325,4 +347,18 @@ func createMessage(subject string) broker.CreateMessageDTO {
 	body := randomString(16)
 
 	return broker.NewCreateMessageDTO(subject, body, int32(0))
+}
+
+func randomString(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
+func createMessageWithExpire(subject string, duration time.Duration) broker.CreateMessageDTO {
+	body := randomString(16)
+
+	return broker.CreateMessageDTO{Subject: subject, Body: body, ExpirationTime: broker.CalcExpirationTime(duration)}
 }
