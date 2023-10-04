@@ -20,7 +20,7 @@ func NewCreateMessageDTO(subject string, body string, expiration int32) CreateMe
 type Broker interface {
 	io.Closer
 	Publish(ctx context.Context, msg CreateMessageDTO) (int, error)
-	Subscribe(ctx context.Context, subject string) (<-chan types.CreatedMessage, error)
+	Subscribe(ctx context.Context, subject string) (<-chan types.CreatedMessageWithoutId, error)
 	Fetch(ctx context.Context, subject string, id int) (types.CreatedMessage, error)
 }
 
