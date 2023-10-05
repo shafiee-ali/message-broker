@@ -1,7 +1,6 @@
 package types
 
 import (
-	"therealbroker/pkg/models"
 	"time"
 )
 
@@ -33,15 +32,6 @@ func NewCreatedMessageWithoutId(msg CreatedMessage) *CreatedMessageWithoutId {
 func NewSubscriber() *Subscriber {
 	return &Subscriber{
 		Stream: make(chan CreatedMessageWithoutId, 100),
-	}
-}
-
-func NewCreatedMessage(msgModel models.Message) CreatedMessage {
-	return CreatedMessage{
-		Id:             msgModel.Id,
-		Subject:        msgModel.Subject,
-		Body:           msgModel.Body,
-		ExpirationTime: msgModel.ExpirationTime,
 	}
 }
 
