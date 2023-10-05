@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"therealbroker/api"
+	"therealbroker/internal/broker"
+	"therealbroker/pkg/database"
+	"therealbroker/pkg/repository"
 )
 
 // Main requirements:
@@ -13,5 +16,15 @@ import (
 
 func main() {
 	fmt.Println("Server started...")
-	api.StartGrpcServer()
+	dbConfig := database.DBConfig{
+		User:   "ali",
+		Pass:   "password",
+		DbName: "ali",
+		Port:   5434,
+		Host:   "localhost",
+	}
+	db := database.NewPostgres(dbConfig)
+	postgresRepo := repository.NewPostgresRepo(db)
+	broker := broker.NewModule(&postgresRepo)
+	api.StartGrpcServer(broker)
 }
