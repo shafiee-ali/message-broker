@@ -13,7 +13,7 @@ type Module struct {
 	repository        repository.IMessageRepository
 	statusLock        sync.Mutex
 	addSubscriberLock sync.Mutex
-	publishLock       sync.Mutex
+	publishLock       sync.RWMutex
 	isClosed          bool
 }
 
@@ -38,7 +38,9 @@ func (m *Module) Publish(ctx context.Context, msg broker.CreateMessageDTO) (int,
 		return -1, err
 	}
 	createdMessage := m.repository.Add(msg)
+	m.publishLock.RLock()
 	m.SendMessageToSubscribers(createdMessage)
+	m.publishLock.RUnlock()
 	return createdMessage.Id, nil
 }
 
