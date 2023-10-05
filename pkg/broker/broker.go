@@ -25,5 +25,5 @@ type Broker interface {
 }
 
 func CalcExpirationTime(d time.Duration) time.Time {
-	return time.Now().Add(d)
+	return time.Now().Add(d * time.Second)
 }
