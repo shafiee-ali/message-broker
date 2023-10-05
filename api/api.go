@@ -15,6 +15,12 @@ type server struct {
 	broker broker.Broker
 }
 
+func NewServer(b broker.Broker) *server {
+	return &server{
+		broker: b,
+	}
+}
+
 func (s *server) Publish(ctx context.Context, request *pb.PublishRequest) (*pb.PublishResponse, error) {
 	newMsg := broker.NewCreateMessageDTO(request.Subject, string(request.Body), request.ExpirationSeconds)
 	id, err := s.broker.Publish(ctx, newMsg)
@@ -63,13 +69,14 @@ func (s *server) Fetch(ctx context.Context, request *pb.FetchRequest) (*pb.Messa
 	}, nil
 }
 
-func StartGrpcServer() {
+func StartGrpcServer(b broker.Broker) {
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		log.Fatalf("Starting server failed %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterBrokerServer(s, &server{})
+
+	pb.RegisterBrokerServer(s, NewServer(b))
 	err = s.Serve(listener)
 	if err != nil {
 		log.Fatalf("Starting server failed %v", err)
