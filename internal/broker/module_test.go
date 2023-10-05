@@ -20,13 +20,13 @@ var (
 
 func TestMain(m *testing.M) {
 	rand.Seed(time.Now().Unix())
-	inMemoryRepo := repository.NewInMemoryDB()
+	inMemoryRepo := repository.NewInMemoryMessageDB()
 	service = NewModule(inMemoryRepo)
 	m.Run()
 }
 
 func Setup() {
-	inMemoryRepo := repository.NewInMemoryDB()
+	inMemoryRepo := repository.NewInMemoryMessageDB()
 	service = NewModule(inMemoryRepo)
 }
 
