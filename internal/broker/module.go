@@ -47,12 +47,12 @@ func (m *Module) Publish(ctx context.Context, msg broker.CreateMessageDTO) (int,
 func (m *Module) SendMessageToSubscribers(msg types.CreatedMessage) {
 	msgWithoutId := types.NewCreatedMessageWithoutId(msg)
 	wg := sync.WaitGroup{}
-	for _, subsriber := range m.subscribers[msg.Subject] {
+	for _, subscriber := range m.subscribers[msg.Subject] {
 		wg.Add(1)
 		go func(sub *types.Subscriber) {
 			defer wg.Done()
 			sub.Stream <- *msgWithoutId
-		}(subsriber)
+		}(subscriber)
 	}
 	wg.Wait()
 }
