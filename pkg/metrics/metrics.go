@@ -45,7 +45,7 @@ func StartPrometheus() BrokerMetrics {
 
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
-		err := http.ListenAndServe(":9090", nil)
+		err := http.ListenAndServe(":9091", nil)
 		if err != nil {
 			log.Errorln(err)
 			return
