@@ -1,11 +1,14 @@
 networks:
   broker-net:
+volumes:
+  prometheus_data:
 
 services:
   prometheus:
     image: prom/prometheus
     volumes:
-      - ./prometheus.yml:etc/prometheus/prometheus.yml
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -23,7 +26,7 @@ services:
     depends_on:
       - prometheus
     volumes:
-      - ./grafana:var/lib/grafana
+      - ./grafana:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=testtest
       - GF_USERS_ALLOW_SIGN_UP=false
