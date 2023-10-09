@@ -10,7 +10,6 @@ import (
 type BrokerMetrics struct {
 	RpcMethodCount    *prometheus.CounterVec
 	RpcMethodLatency  *prometheus.HistogramVec
-	DbQueryLatency    *prometheus.HistogramVec
 	ActiveSubscribers prometheus.Gauge
 }
 
@@ -31,15 +30,6 @@ func StartPrometheus() BrokerMetrics {
 		},
 		[]string{"method"},
 	)
-
-	dbQueryLatency := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "broker_db_query_latency",
-			Help:    "Latency of database queries",
-			Buckets: []float64{0.125, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2},
-		},
-		[]string{"query"},
-	)
 	activeSubscribers := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "broker_active_subscribers",
@@ -49,14 +39,13 @@ func StartPrometheus() BrokerMetrics {
 	metrics := BrokerMetrics{
 		RpcMethodCount:    rpcMethodCounter,
 		RpcMethodLatency:  rpcMethodLatency,
-		DbQueryLatency:    dbQueryLatency,
 		ActiveSubscribers: activeSubscribers,
 	}
 	prometheus.MustRegister(metrics.RpcMethodLatency)
 
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
-		err := http.ListenAndServe(":8081", nil)
+		err := http.ListenAndServe(":9090", nil)
 		if err != nil {
 			log.Errorln(err)
 			return
