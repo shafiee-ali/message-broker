@@ -27,13 +27,15 @@ func NewServer(b broker.Broker, metrics metrics.BrokerMetrics) *server {
 
 func (s *server) Publish(ctx context.Context, request *pb.PublishRequest) (*pb.PublishResponse, error) {
 	currentTime := time.Now()
-	defer s.metrics.RpcMethodLatency.WithLabelValues("Publish").Observe(float64(time.Since(currentTime).Nanoseconds()))
+	defer s.metrics.RpcMethodLatency.WithLabelValues(metrics.PUBLISH_METHOD).Observe(float64(time.Since(currentTime).Nanoseconds()))
 	newMsg := broker.NewCreateMessageDTO(request.Subject, string(request.Body), request.ExpirationSeconds)
 	id, err := s.broker.Publish(ctx, newMsg)
 	if err != nil {
-		//s.metrics.RpcMethodCount.WithLabelValues()
+		s.metrics.RpcMethodCount.WithLabelValues(metrics.PUBLISH_METHOD, metrics.ERROR_STATUS).Inc()
 		log.Printf("Publish failed %v", err)
+		return nil, err
 	}
+	s.metrics.RpcMethodCount.WithLabelValues(metrics.PUBLISH_METHOD, metrics.SUCCESS_STATUS).Inc()
 	return &pb.PublishResponse{
 		Id: int32(id),
 	}, nil
@@ -41,9 +43,11 @@ func (s *server) Publish(ctx context.Context, request *pb.PublishRequest) (*pb.P
 }
 
 func (s *server) Subscribe(request *pb.SubscribeRequest, srv pb.Broker_SubscribeServer) error {
+	currentTime := time.Now()
+	defer s.metrics.RpcMethodLatency.WithLabelValues(metrics.SUBSCRIBE_METHOD).Observe(float64(time.Since(currentTime).Nanoseconds()))
 	ch, err := s.broker.Subscribe(srv.Context(), request.Subject)
 	if err != nil {
-
+		return err
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -67,10 +71,14 @@ func (s *server) Subscribe(request *pb.SubscribeRequest, srv pb.Broker_Subscribe
 }
 
 func (s *server) Fetch(ctx context.Context, request *pb.FetchRequest) (*pb.MessageResponse, error) {
+	currentTime := time.Now()
+	defer s.metrics.RpcMethodLatency.WithLabelValues(metrics.FETCH_METHOD).Observe(float64(time.Since(currentTime).Nanoseconds()))
 	msg, err := s.broker.Fetch(ctx, request.Subject, int(request.Id))
 	if err != nil {
+		s.metrics.RpcMethodCount.WithLabelValues(metrics.FETCH_METHOD, metrics.ERROR_STATUS).Inc()
 		return nil, err
 	}
+	s.metrics.RpcMethodCount.WithLabelValues(metrics.FETCH_METHOD, metrics.SUCCESS_STATUS).Inc()
 	return &pb.MessageResponse{
 		Body: []byte(msg.Body),
 	}, nil
