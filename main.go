@@ -18,9 +18,9 @@ import (
 func main() {
 	fmt.Println("Server started...")
 	dbConfig := database.DBConfig{
-		User:   "ali",
+		User:   "root",
 		Pass:   "password",
-		DbName: "ali",
+		DbName: "broker",
 		Port:   5434,
 		Host:   "localhost",
 	}
