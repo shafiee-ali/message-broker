@@ -5,6 +5,7 @@ import (
 	"therealbroker/api"
 	"therealbroker/internal/broker"
 	"therealbroker/pkg/database"
+	"therealbroker/pkg/metrics"
 	"therealbroker/pkg/repository"
 )
 
@@ -26,5 +27,6 @@ func main() {
 	db := database.NewPostgres(dbConfig)
 	postgresRepo := repository.NewPostgresRepo(db)
 	broker := broker.NewModule(&postgresRepo)
-	api.StartGrpcServer(broker)
+	metrics := metrics.StartPrometheus()
+	api.StartGrpcServer(broker, metrics)
 }

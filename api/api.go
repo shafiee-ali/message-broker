@@ -8,23 +8,30 @@ import (
 	"sync"
 	pb "therealbroker/api/proto"
 	"therealbroker/pkg/broker"
+	"therealbroker/pkg/metrics"
+	"time"
 )
 
 type server struct {
 	pb.UnimplementedBrokerServer
-	broker broker.Broker
+	broker  broker.Broker
+	metrics metrics.BrokerMetrics
 }
 
-func NewServer(b broker.Broker) *server {
+func NewServer(b broker.Broker, metrics metrics.BrokerMetrics) *server {
 	return &server{
-		broker: b,
+		broker:  b,
+		metrics: metrics,
 	}
 }
 
 func (s *server) Publish(ctx context.Context, request *pb.PublishRequest) (*pb.PublishResponse, error) {
+	currentTime := time.Now()
+	defer s.metrics.RpcMethodLatency.WithLabelValues("Publish").Observe(float64(time.Since(currentTime).Nanoseconds()))
 	newMsg := broker.NewCreateMessageDTO(request.Subject, string(request.Body), request.ExpirationSeconds)
 	id, err := s.broker.Publish(ctx, newMsg)
 	if err != nil {
+		//s.metrics.RpcMethodCount.WithLabelValues()
 		log.Printf("Publish failed %v", err)
 	}
 	return &pb.PublishResponse{
@@ -69,14 +76,14 @@ func (s *server) Fetch(ctx context.Context, request *pb.FetchRequest) (*pb.Messa
 	}, nil
 }
 
-func StartGrpcServer(b broker.Broker) {
+func StartGrpcServer(b broker.Broker, metrics metrics.BrokerMetrics) {
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		log.Fatalf("Starting server failed %v", err)
 	}
 	s := grpc.NewServer()
 
-	pb.RegisterBrokerServer(s, NewServer(b))
+	pb.RegisterBrokerServer(s, NewServer(b, metrics))
 	err = s.Serve(listener)
 	if err != nil {
 		log.Fatalf("Starting server failed %v", err)
