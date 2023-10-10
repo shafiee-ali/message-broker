@@ -18,7 +18,7 @@ import (
 func main() {
 	fmt.Println("Server started...")
 	dbConfig := database.DBConfig{
-		User:   "root",
+		User:   "postgres",
 		Pass:   "password",
 		DbName: "broker",
 		Port:   5432,
