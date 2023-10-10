@@ -1,9 +1,24 @@
+version: '3.8'
+
 networks:
   broker-net:
 volumes:
   prometheus_data:
+  postgres:
 
 services:
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=broker
+    volumes:
+      - postgres:/data/postgresports
+    ports:
+      - 5434:5432
+    networks:
+      - broker-net
+
   broker:
     build: .
     ports:
@@ -13,17 +28,7 @@ services:
       - postgres
     networks:
       - broker-net
-
-  postgres:
-    image: postgres
-    environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=broker
-    ports:
-      - 5434:5432
-    networks:
-      - broker-net
+    restart: always
 
   prometheus:
     image: prom/prometheus
@@ -47,7 +52,7 @@ services:
     depends_on:
       - prometheus
     volumes:
-      - ./grafana:/var/lib/grafana
+      - ../grafana:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=testtest
       - GF_USERS_ALLOW_SIGN_UP=false
@@ -55,6 +60,7 @@ services:
       - 3000:3000
     networks:
       - broker-net
+
     restart: always
 
 
