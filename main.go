@@ -21,8 +21,8 @@ func main() {
 		User:   "root",
 		Pass:   "password",
 		DbName: "broker",
-		Port:   5434,
-		Host:   "localhost",
+		Port:   5432,
+		Host:   "postgres",
 	}
 	db := database.NewPostgres(dbConfig)
 	postgresRepo := repository.NewPostgresRepo(db)
