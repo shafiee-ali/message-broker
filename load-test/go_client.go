@@ -46,7 +46,7 @@ func main() {
 			if err != nil {
 				fmt.Printf("Error in publish %v \n", err)
 			} else {
-				fmt.Printf("Success %v \n")
+				fmt.Printf("Success\n")
 			}
 		}()
 	}
