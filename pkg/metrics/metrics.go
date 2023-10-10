@@ -41,7 +41,9 @@ func StartPrometheus() BrokerMetrics {
 		RpcMethodLatency:  rpcMethodLatency,
 		ActiveSubscribers: activeSubscribers,
 	}
-	prometheus.MustRegister(metrics.RpcMethodLatency)
+	prometheus.MustRegister(rpcMethodCounter)
+	prometheus.MustRegister(rpcMethodLatency)
+	prometheus.MustRegister(activeSubscribers)
 
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
