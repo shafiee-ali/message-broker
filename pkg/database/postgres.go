@@ -35,6 +35,12 @@ func NewPostgres(config DBConfig) *PostgresDB {
 		log.Fatalf("Unable connect to database %v", err)
 	}
 
+	db, err := dbConnection.DB()
+
+	//db.SetConnMaxLifetime(2 * time.Minute)
+	db.SetMaxIdleConns(500)
+	db.SetMaxOpenConns(500)
+
 	dbConnection.AutoMigrate(models.PostgresMessage{})
 	return &PostgresDB{dbConnection}
 }
