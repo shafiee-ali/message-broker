@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"therealbroker/api"
 	"therealbroker/internal/broker"
 	"therealbroker/pkg/database"
@@ -16,7 +15,6 @@ import (
 // 	  for every base functionality ( publish, subscribe etc. )
 
 func main() {
-	fmt.Println("Server started...")
 	dbConfig := database.DBConfig{
 		User:   "postgres",
 		Pass:   "password",
@@ -28,5 +26,6 @@ func main() {
 	postgresRepo := repository.NewPostgresRepo(db)
 	broker := broker.NewModule(&postgresRepo)
 	metrics := metrics.StartPrometheus()
+	//log.SetLevel(log.TraceLevel)
 	api.StartGrpcServer(broker, metrics)
 }

@@ -29,14 +29,14 @@ func main() {
 
 	client := pb.NewBrokerClient(conn)
 
-	const CONCURRENT_PUBLISH_COUNT = 1000
+	const CONCURRENT_PUBLISH_COUNT = 100000
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < CONCURRENT_PUBLISH_COUNT; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, err := client.Publish(
+			response, err := client.Publish(
 				context.Background(),
 				&pb.PublishRequest{
 					Subject:           randomString(2),
@@ -46,7 +46,7 @@ func main() {
 			if err != nil {
 				fmt.Printf("Error in publish %v \n", err)
 			} else {
-				fmt.Printf("Success\n")
+				fmt.Printf("Success %v\n", response)
 			}
 		}()
 	}

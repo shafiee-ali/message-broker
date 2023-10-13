@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"github.com/sirupsen/logrus"
 	"sync"
 	"therealbroker/internal/mapper"
 	"therealbroker/internal/types"
@@ -34,7 +33,7 @@ func (p *PostgresRepo) Add(message pkgBroker.CreateMessageDTO) types.CreatedMess
 
 	p.insertLock.Lock()
 	p.db.DB.Create(&dbMsg)
-	logrus.Debugf("Created record %v", dbMsg)
+	//logrus.Tracef("Created record %v", dbMsg)
 	p.insertLock.Unlock()
 	return mapper.DBMessageToCreatedMessage(dbMsg)
 }

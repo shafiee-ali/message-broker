@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"log"
 	"net"
 	"sync"
 	pb "therealbroker/api/proto"
@@ -28,6 +28,7 @@ func NewServer(b broker.Broker, metrics metrics.BrokerMetrics) *server {
 func (s *server) Publish(ctx context.Context, request *pb.PublishRequest) (*pb.PublishResponse, error) {
 	currentTime := time.Now()
 	defer s.metrics.RpcMethodLatency.WithLabelValues(metrics.PUBLISH_METHOD).Observe(float64(time.Since(currentTime).Nanoseconds()))
+	//log.Tracef("Publish api called with params subject %v and body %v", request.Subject, request.Body)
 	newMsg := broker.NewCreateMessageDTO(request.Subject, string(request.Body), request.ExpirationSeconds)
 	id, err := s.broker.Publish(ctx, newMsg)
 	if err != nil {
@@ -36,10 +37,10 @@ func (s *server) Publish(ctx context.Context, request *pb.PublishRequest) (*pb.P
 		return nil, err
 	}
 	s.metrics.RpcMethodCount.WithLabelValues(metrics.PUBLISH_METHOD, metrics.SUCCESS_STATUS).Inc()
+	//log.Tracef("Publish response is %v", id)
 	return &pb.PublishResponse{
 		Id: int32(id),
 	}, nil
-
 }
 
 func (s *server) Subscribe(request *pb.SubscribeRequest, srv pb.Broker_SubscribeServer) error {
@@ -90,6 +91,7 @@ func StartGrpcServer(b broker.Broker, metrics metrics.BrokerMetrics) {
 		log.Fatalf("Starting server failed %v", err)
 	}
 	s := grpc.NewServer()
+	log.Infoln("Server started...")
 
 	pb.RegisterBrokerServer(s, NewServer(b, metrics))
 	err = s.Serve(listener)

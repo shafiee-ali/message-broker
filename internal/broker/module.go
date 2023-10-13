@@ -2,6 +2,7 @@ package broker
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"sync"
 	"therealbroker/internal/types"
 	"therealbroker/pkg/broker"
@@ -35,11 +36,13 @@ func (m *Module) Close() error {
 func (m *Module) Publish(ctx context.Context, msg broker.CreateMessageDTO) (int, error) {
 	err := m.checkServerDown()
 	if err != nil {
+		log.Infof("Server is closed...")
 		return -1, err
 	}
 	createdMessage := m.repository.Add(msg)
 	m.publishLock.RLock()
 	m.SendMessageToSubscribers(createdMessage)
+	//log.Tracef("Message send to subscribers")
 	m.publishLock.RUnlock()
 	return createdMessage.Id, nil
 }
