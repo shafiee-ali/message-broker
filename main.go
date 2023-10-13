@@ -1,9 +1,9 @@
 package main
 
 import (
+	log "github.com/sirupsen/logrus"
 	"therealbroker/api"
 	"therealbroker/internal/broker"
-	"therealbroker/pkg/database"
 	"therealbroker/pkg/metrics"
 	"therealbroker/pkg/repository"
 )
@@ -15,17 +15,18 @@ import (
 // 	  for every base functionality ( publish, subscribe etc. )
 
 func main() {
-	dbConfig := database.DBConfig{
-		User:   "postgres",
-		Pass:   "password",
-		DbName: "broker",
-		Port:   5432,
-		Host:   "postgres",
-	}
-	db := database.NewPostgres(dbConfig)
-	postgresRepo := repository.NewPostgresRepo(db)
-	broker := broker.NewModule(&postgresRepo)
+	//dbConfig := database.DBConfig{
+	//	User:   "postgres",
+	//	Pass:   "password",
+	//	DbName: "broker",
+	//	Port:   5432,
+	//	Host:   "postgres",
+	//}
+	//db := database.NewPostgres(dbConfig)
+	//postgresRepo := repository.NewPostgresRepo(db)
+	inMemoryRepo := repository.NewInMemoryMessageDB()
+	broker := broker.NewModule(inMemoryRepo)
 	metrics := metrics.StartPrometheus()
-	//log.SetLevel(log.TraceLevel)
+	log.SetLevel(log.TraceLevel)
 	api.StartGrpcServer(broker, metrics)
 }
