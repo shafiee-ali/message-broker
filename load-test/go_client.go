@@ -22,7 +22,7 @@ func randomString(n int) string {
 
 func main() {
 
-	conn, err := grpc.Dial("localhost:8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial("192.168.49.2:30007", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		fmt.Println("Error in connection to grpc server")
 	}
@@ -32,7 +32,7 @@ func main() {
 	const CONCURRENT_PUBLISH_COUNT = 100000
 
 	wg := sync.WaitGroup{}
-	for j := 0; j < 10; j++ {
+	for j := 0; j < 20; j++ {
 		for i := 0; i < CONCURRENT_PUBLISH_COUNT; i++ {
 			wg.Add(1)
 			go func() {
