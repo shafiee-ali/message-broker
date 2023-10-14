@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-deployment
+  labels:
+    name: grafana-deployment
+    app: message-broker
+spec:
+  selector:
+    matchLabels:
+      name: grafana-pod
+      app: message-broker
+  replicas: 1
+  template:
+    metadata:
+      name: grafana-pod
+      labels:
+        name: grafana-pod
+        app: message-broker
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: "testtest"
+            - name: GF_USERS_ALLOW_SIGN_UP
+              value: "false"

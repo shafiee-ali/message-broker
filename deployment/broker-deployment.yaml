@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broker-deployment
+  labels:
+    name: broker-deployment
+    app: message-broker
+spec:
+  selector:
+    matchLabels:
+      name: broker-pod
+      app: message-broker
+  replicas: 1
+  template:
+    metadata:
+      name: broker-pod
+      labels:
+        name: broker-pod
+        app: message-broker
+    spec:
+      containers:
+        - name: broker
+          image: alish-broker
+          imagePullPolicy: Never

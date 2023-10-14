@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker
+  labels:
+    name: broker-service
+    app: message-broker
+spec:
+  type: NodePort
+  ports:
+    - name: grpc
+      port: 8080
+      targetPort: 8080
+      nodePort: 30007
+    - name: prometheus
+      port: 9091
+      targetPort: 9091
+      nodePort: 30008
+  selector:
+    name: broker-pod
+    app: message-broker
