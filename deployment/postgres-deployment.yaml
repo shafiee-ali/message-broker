@@ -14,17 +14,19 @@ spec:
   template:
     metadata:
       name: postgres-pod
-      app: message-broker
+      labels:
+        name: postgres-pod
+        app: message-broker
     spec:
       containers:
         - name: postgres
           image: postgres
           ports:
             - containerPort: 5432
-      env:
-        - name: POSTGRES_USER
-          value: postgres
-        - name: POSTGRES_PASSWORD
-          value: password
-        - name: POSTGRES_DB
-          value: broker
+          env:
+          - name: POSTGRES_USER
+            value: postgres
+          - name: POSTGRES_PASSWORD
+            value: password
+          - name: POSTGRES_DB
+            value: broker
