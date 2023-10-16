@@ -39,7 +39,11 @@ func (m *Module) Publish(ctx context.Context, msg broker.CreateMessageDTO) (int,
 		log.Infof("Server is closed...")
 		return -1, err
 	}
+	//go func() {
+	//	m.repository.Add(msg)
+	//}()
 	createdMessage := m.repository.Add(msg)
+	//_,
 	m.publishLock.RLock()
 	m.SendMessageToSubscribers(createdMessage)
 	//log.Tracef("Message send to subscribers")
