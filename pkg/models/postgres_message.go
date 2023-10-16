@@ -11,7 +11,6 @@ type PostgresMessage struct {
 	Body           string    `gorm:"not null"`
 	ExpirationTime time.Time `gorm:"not null"`
 	CreatedAt      time.Time
-	UpdatedAt      time.Time
 }
 
 func (msg *PostgresMessage) IsExpired() bool {
