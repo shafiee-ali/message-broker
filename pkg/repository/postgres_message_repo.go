@@ -13,9 +13,9 @@ import (
 
 type PostgresRepo struct {
 	db              *database.PostgresDB
-	insertLock      sync.Mutex
-	incrementIdLock sync.Mutex
-	id              *int
+	insertLock      *sync.Mutex
+	incrementIdLock *sync.Mutex
+	id              int
 	ticker          *time.Ticker
 	batchMessages   []models.PostgresMessage
 }
@@ -23,9 +23,11 @@ type PostgresRepo struct {
 func NewPostgresRepo(db *database.PostgresDB) *PostgresRepo {
 
 	pgRepo := &PostgresRepo{
-		db:     db,
-		ticker: time.NewTicker(time.Microsecond * 5),
-		id:     nil,
+		db:              db,
+		ticker:          time.NewTicker(time.Millisecond * 500),
+		id:              -1,
+		insertLock:      &sync.Mutex{},
+		incrementIdLock: &sync.Mutex{},
 	}
 	log.Infof("After creating pg repo obj")
 	pgRepo.createMessagesInBatch()
@@ -33,20 +35,19 @@ func NewPostgresRepo(db *database.PostgresDB) *PostgresRepo {
 }
 
 func (p *PostgresRepo) NextId() int {
-	if p.id != nil {
-		*p.id++
+	if p.id != -1 {
+		p.id++
 	} else {
 		var lastCreatedMessage *models.PostgresMessage
 		p.db.DB.Raw("SELECT * FROM postgres_messages ORDER BY created_at DESC LIMIT 1;").Scan(&lastCreatedMessage)
 		log.Infof("Founded row %v", lastCreatedMessage)
 		if lastCreatedMessage == nil {
-			id := 0
-			p.id = &id
+			p.id = 0
 		} else {
-			p.id = &lastCreatedMessage.ID
+			p.id = lastCreatedMessage.ID + 1
 		}
 	}
-	return *p.id
+	return p.id
 }
 
 func (p *PostgresRepo) Add(message pkgBroker.CreateMessageDTO) types.CreatedMessage {
@@ -77,9 +78,10 @@ func (p *PostgresRepo) createMessagesInBatch() {
 				}
 				log.Infof("Create batch with length %v", len(p.batchMessages))
 				p.insertLock.Lock()
-				p.db.DB.CreateInBatches(p.batchMessages, 150)
+				messagesForInsertion := p.batchMessages
 				p.batchMessages = make([]models.PostgresMessage, 0)
 				p.insertLock.Unlock()
+				p.db.DB.CreateInBatches(messagesForInsertion, len(messagesForInsertion))
 			}
 		}
 	}()
