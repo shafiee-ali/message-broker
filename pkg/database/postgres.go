@@ -6,7 +6,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"therealbroker/pkg/models"
-	"time"
 )
 
 type DBConfig struct {
@@ -30,17 +29,16 @@ func NewPostgres(config DBConfig) *PostgresDB {
 		config.Pass,
 		config.DbName,
 	)
-
 	dbConnection, err := gorm.Open(postgres.Open(dbConfig), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Unable connect to database %v", err)
 	}
 
-	db, err := dbConnection.DB()
+	//_, err := dbConnection.DB()
 
-	db.SetConnMaxLifetime(2 * time.Minute)
-	db.SetMaxIdleConns(20)
-	db.SetMaxOpenConns(20)
+	//db.SetConnMaxLifetime(2 * time.Minute)
+	//db.SetMaxIdleConns(20)
+	//db.SetMaxOpenConns(20)
 
 	dbConnection.AutoMigrate(models.PostgresMessage{})
 	return &PostgresDB{dbConnection}
