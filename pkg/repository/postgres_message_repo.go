@@ -51,12 +51,12 @@ func (p *PostgresRepo) NextId() int {
 }
 
 func (p *PostgresRepo) Add(message pkgBroker.CreateMessageDTO) types.CreatedMessage {
-	dbMsg := mapper.CreateMessageDTOToDBMessage(message)
+	dbMsg := mapper.CreateMessageDTOToPostgresMessage(message)
 	p.insertLock.Lock()
 	dbMsg.ID = p.NextId()
 	p.batchMessages = append(p.batchMessages, dbMsg)
 	p.insertLock.Unlock()
-	return mapper.DBMessageToCreatedMessage(dbMsg)
+	return mapper.PostgresMessageToCreatedMessage(dbMsg)
 }
 
 func (p *PostgresRepo) FetchUnexpiredBySubjectAndId(subject string, id int) (types.CreatedMessage, error) {
@@ -65,7 +65,7 @@ func (p *PostgresRepo) FetchUnexpiredBySubjectAndId(subject string, id int) (typ
 	if message.IsExpired() {
 		return types.CreatedMessage{}, pkgBroker.ErrExpiredID
 	}
-	return mapper.DBMessageToCreatedMessage(message), nil
+	return mapper.PostgresMessageToCreatedMessage(message), nil
 }
 
 func (p *PostgresRepo) createMessagesInBatch() {
