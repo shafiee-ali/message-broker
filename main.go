@@ -16,7 +16,7 @@ import (
 // 	  for every base functionality ( publish, subscribe etc. )
 
 func main() {
-	DB_TYPE := database.POSTGRES
+	DB_TYPE := database.CASSANDRA
 
 	repo := repository.RepoFactory(DB_TYPE)
 	broker := broker.NewModule(repo)
