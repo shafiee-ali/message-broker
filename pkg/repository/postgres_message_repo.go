@@ -17,7 +17,8 @@ type PostgresRepo struct {
 	incrementIdLock *sync.Mutex
 	id              int
 	ticker          *time.Ticker
-	batchMessages   []models.PostgresMessage
+	batchMessage    []models.PostgresMessage
+	creationAcks    []chan bool
 }
 
 func NewPostgresRepo(db *database.PostgresDB) *PostgresRepo {
@@ -28,6 +29,7 @@ func NewPostgresRepo(db *database.PostgresDB) *PostgresRepo {
 		id:              -1,
 		insertLock:      &sync.Mutex{},
 		incrementIdLock: &sync.Mutex{},
+		creationAcks:    make([]chan bool, 0),
 	}
 	log.Infof("After creating pg repo obj")
 	pgRepo.createMessagesInBatch()
@@ -54,8 +56,12 @@ func (p *PostgresRepo) Add(message pkgBroker.CreateMessageDTO) types.CreatedMess
 	dbMsg := mapper.CreateMessageDTOToPostgresMessage(message)
 	p.insertLock.Lock()
 	dbMsg.ID = p.NextId()
-	p.batchMessages = append(p.batchMessages, dbMsg)
+	ch := make(chan bool)
+	p.creationAcks = append(p.creationAcks, ch)
+	p.batchMessage = append(p.batchMessage, dbMsg)
 	p.insertLock.Unlock()
+
+	<-ch
 	return mapper.PostgresMessageToCreatedMessage(dbMsg)
 }
 
@@ -73,15 +79,20 @@ func (p *PostgresRepo) createMessagesInBatch() {
 		for {
 			select {
 			case <-p.ticker.C:
-				if len(p.batchMessages) == 0 {
+				if len(p.batchMessage) == 0 {
 					continue
 				}
-				log.Infof("Create batch with length %v", len(p.batchMessages))
+				log.Infof("Create batch with length %v", len(p.batchMessage))
 				p.insertLock.Lock()
-				messagesForInsertion := p.batchMessages
-				p.batchMessages = make([]models.PostgresMessage, 0)
+				messagesForInsertion := p.batchMessage
+				ackChannels := p.creationAcks
+				p.batchMessage = make([]models.PostgresMessage, 0)
+				p.creationAcks = make([]chan bool, 0)
 				p.insertLock.Unlock()
 				p.db.DB.CreateInBatches(messagesForInsertion, len(messagesForInsertion))
+				for _, ch := range ackChannels {
+					ch <- true
+				}
 			}
 		}
 	}()
