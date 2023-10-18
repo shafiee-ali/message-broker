@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"therealbroker/api"
 	"therealbroker/internal/broker"
+	"therealbroker/pkg/database"
 	"therealbroker/pkg/metrics"
 	"therealbroker/pkg/repository"
 )
@@ -15,7 +16,7 @@ import (
 // 	  for every base functionality ( publish, subscribe etc. )
 
 func main() {
-	DB_TYPE := "CASSANDRA"
+	DB_TYPE := database.POSTGRES
 
 	repo := repository.RepoFactory(DB_TYPE)
 	broker := broker.NewModule(repo)

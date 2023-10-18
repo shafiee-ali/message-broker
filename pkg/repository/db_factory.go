@@ -3,11 +3,11 @@ package repository
 import "therealbroker/pkg/database"
 
 func RepoFactory(dbName string) IMessageRepository {
-	if dbName == "CASSANDRA" {
+	if dbName == database.CASSANDRA {
 		db := database.NewCassandra()
 		return NewCassandraRepo(db)
 	}
-	if dbName == "POSTGRES" {
+	if dbName == database.POSTGRES {
 		dbConfig := database.DBConfig{
 			User:   "postgres",
 			Pass:   "password",
@@ -18,7 +18,7 @@ func RepoFactory(dbName string) IMessageRepository {
 		db := database.NewPostgres(dbConfig)
 		return NewPostgresRepo(db)
 	}
-	if dbName == "MEMORY" {
+	if dbName == database.MEMORY {
 		return NewInMemoryMessageDB()
 	}
 	return nil
