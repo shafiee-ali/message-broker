@@ -22,6 +22,7 @@ type CassandraRepo struct {
 	id              int
 	ticker          *time.Ticker
 	batchMessages   []models.CassandraMessage
+	creationAcks    []chan bool
 }
 
 func (cas *CassandraRepo) createMessageTable() {
@@ -43,6 +44,7 @@ func NewCassandraRepo(db *database.CassandraDB) *CassandraRepo {
 		id:              -1,
 		insertLock:      &sync.Mutex{},
 		incrementIdLock: &sync.Mutex{},
+		creationAcks:    make([]chan bool, 0),
 	}
 	casRepo.createMessageTable()
 	log.Infof("After creating cas repo obj")
@@ -69,6 +71,8 @@ func (cas *CassandraRepo) Add(message pkgBroker.CreateMessageDTO) types.CreatedM
 	dbMsg := mapper.CreateMessageDTOToCassandraMessage(message)
 	cas.insertLock.Lock()
 	dbMsg.ID = cas.NextId()
+	ch := make(chan bool)
+	cas.creationAcks = append(cas.creationAcks, ch)
 	cas.batchMessages = append(cas.batchMessages, dbMsg)
 	cas.insertLock.Unlock()
 	return mapper.CassandraMessageToCreatedMessage(dbMsg)
@@ -111,6 +115,8 @@ func (cas *CassandraRepo) createMessagesInBatch() {
 				log.Infof("Create batch with length %v", len(cas.batchMessages))
 				cas.insertLock.Lock()
 				messagesForInsertion := cas.batchMessages
+				ackChannels := cas.creationAcks
+				cas.creationAcks = make([]chan bool, 0)
 				cas.batchMessages = make([]models.CassandraMessage, 0)
 				cas.insertLock.Unlock()
 				batch := gocql.NewBatch(gocql.UnloggedBatch)
@@ -130,6 +136,9 @@ func (cas *CassandraRepo) createMessagesInBatch() {
 					if err != nil {
 						log.Errorln("ExecuteBatch error", err)
 					}
+				}
+				for _, ch := range ackChannels {
+					ch <- true
 				}
 			}
 		}
