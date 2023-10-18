@@ -19,6 +19,13 @@ services:
     networks:
       - broker-net
 
+  cassandra:
+    image: cassandra
+    ports:
+      - 9042:9042
+    networks:
+      - broker-net
+
   broker:
     build: .
     ports:
