@@ -14,11 +14,7 @@ func NewCassandra() *CassandraDB {
 	cluster := gocql.NewCluster("cassandra")
 	fmt.Println("Cas connected", cluster)
 	cluster.Keyspace = "broker"
-	cluster.Consistency = gocql.Quorum
-	//cluster.Authenticator = gocql.PasswordAuthenticator{
-	//	Username: "cassandra",
-	//	Password: "password",
-	//}
+	cluster.Consistency = gocql.Any
 
 	session, err := cluster.CreateSession()
 	if err != nil {
