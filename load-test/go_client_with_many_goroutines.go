@@ -18,10 +18,10 @@ func main() {
 
 	client := pb.NewBrokerClient(conn)
 
-	const CONCURRENT_PUBLISH_COUNT = 10
+	const CONCURRENT_PUBLISH_COUNT = 100000
 
 	wg := sync.WaitGroup{}
-	for j := 0; j < 1; j++ {
+	for j := 0; j < 4; j++ {
 		for i := 0; i < CONCURRENT_PUBLISH_COUNT; i++ {
 			wg.Add(1)
 			go func() {
