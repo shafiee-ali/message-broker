@@ -40,7 +40,7 @@ func (cas *CassandraRepo) createMessageTable() {
 func NewCassandraRepo(db *database.CassandraDB) *CassandraRepo {
 	casRepo := &CassandraRepo{
 		db:              db,
-		ticker:          time.NewTicker(time.Millisecond * 500),
+		ticker:          time.NewTicker(time.Microsecond * 10),
 		id:              -1,
 		insertLock:      &sync.Mutex{},
 		incrementIdLock: &sync.Mutex{},
@@ -110,21 +110,23 @@ func (cas *CassandraRepo) createMessagesInBatch() {
 			select {
 			case <-cas.ticker.C:
 				if len(cas.batchMessages) == 0 {
+					log.Infof("Batch size is zero")
 					continue
 				}
-				log.Infof("Create batch with length %v", len(cas.batchMessages))
 				cas.insertLock.Lock()
 				messagesForInsertion := cas.batchMessages
 				ackChannels := cas.creationAcks
 				cas.creationAcks = make([]chan bool, 0)
 				cas.batchMessages = make([]models.CassandraMessage, 0)
 				cas.insertLock.Unlock()
-				batch := gocql.NewBatch(gocql.UnloggedBatch)
+				batch := cas.db.Session.NewBatch(gocql.UnloggedBatch)
+				log.Infof("After create new batch obj")
 				stmt := "INSERT INTO messages (id, subject, body, expiration_time, created_at) VALUES (?, ?, ?, ?, toTimestamp(now()))"
 				for i, msg := range messagesForInsertion {
 					batch.Query(stmt, msg.ID, msg.Subject, msg.Body, msg.ExpirationTime)
 					if i != 0 && i%500 == 0 {
 						err := cas.db.Session.ExecuteBatch(batch)
+						log.Infoln("After exec batch query")
 						if err != nil {
 							log.Errorln("ExecuteBatch error", err)
 						}
@@ -137,9 +139,11 @@ func (cas *CassandraRepo) createMessagesInBatch() {
 						log.Errorln("ExecuteBatch error", err)
 					}
 				}
+				log.Infof("ack channel size %v", len(ackChannels))
 				for _, ch := range ackChannels {
 					ch <- true
 				}
+				log.Infof("Ending one batch")
 			}
 		}
 	}()
