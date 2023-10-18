@@ -15,18 +15,10 @@ import (
 // 	  for every base functionality ( publish, subscribe etc. )
 
 func main() {
-	//dbConfig := database.DBConfig{
-	//	User:   "postgres",
-	//	Pass:   "password",
-	//	DbName: "broker",
-	//	Port:   5432,
-	//	Host:   "postgres",
-	//}
-	//db := database.NewPostgres(dbConfig)
-	//postgresRepo := repository.NewPostgresRepo(db)
-	inMemoryRepo := repository.NewInMemoryMessageDB()
-	//broker := broker.NewModule(postgresRepo)
-	broker := broker.NewModule(inMemoryRepo)
+	DB_TYPE := "CASSANDRA"
+
+	repo := repository.RepoFactory(DB_TYPE)
+	broker := broker.NewModule(repo)
 	metrics := metrics.StartPrometheus()
 
 	log.SetLevel(log.TraceLevel)
