@@ -52,7 +52,7 @@ func workerFunc(messages chan pb.PublishRequest, client pb.BrokerClient) {
 
 }
 
-func main() {
+func main2() {
 
 	tick := time.Tick((time.Second) / (EXPECTED_RATE * 4))
 
